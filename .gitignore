@@ -487,5 +487,5 @@ $RECYCLE.BIN/
 # Excluir proyectos temporalmente para commit inicial
 # IMPORTANTE: Eliminar estas líneas antes de subir cada proyecto
 # ──────────────────────────────────────────────
-src/
-tests/
+#src/
+#tests/
