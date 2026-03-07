@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arquitectura .NET – AgremiacionComercio API</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0b0f1a;
+    --panel:    #111827;
+    --border:   #1e2d45;
+    --accent1:  #00d4ff;
+    --accent2:  #7c3aed;
+    --accent3:  #10b981;
+    --accent4:  #f59e0b;
+    --accent5:  #ef4444;
+    --accent6:  #ec4899;
+    --pk:       #fbbf24;
+    --fk:       #60a5fa;
+    --text:     #e2e8f0;
+    --muted:    #64748b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative; z-index: 10;
+    padding: 0 48px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, #0b0f1a 0%, #111827 100%);
+  }
+
+  .header-top {
+    padding: 28px 0 20px;
+    text-align: center;
+  }
+
+  .header-top .title-main {
+    font-family: 'Syne', sans-serif;
+    font-size: 48px;
+    font-weight: 800;
+    color: #4a7ab5;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+
+  .header-top .title-sub {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 6px;
+    margin-top: 4px;
+  }
+
+  /* ── SUBTITLE BAR ── */
+  .subtitle-bar {
+    position: relative; z-index: 10;
+    padding: 14px 48px;
+    background: rgba(0,212,255,.04);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+    font-size: 12px;
+    color: var(--muted);
+    flex-wrap: wrap;
+  }
+
+  .subtitle-bar .label { color: #475569; letter-spacing: 1px; text-transform: uppercase; font-size: 10px; }
+  .subtitle-bar .sep   { color: var(--border); }
+  .subtitle-bar .name  { color: var(--accent1); font-weight: 700; font-size: 14px; font-family: 'Syne', sans-serif; }
+  .subtitle-bar .tag {
+    padding: 2px 10px;
+    background: rgba(0,212,255,.08);
+    border: 1px solid rgba(0,212,255,.2);
+    border-radius: 4px;
+    font-size: 10px; color: var(--accent1);
+    letter-spacing: 1px;
+  }
+  .subtitle-bar .tag-purple {
+    padding: 2px 10px;
+    background: rgba(124,58,237,.08);
+    border: 1px solid rgba(124,58,237,.25);
+    border-radius: 4px;
+    font-size: 10px; color: #a78bfa;
+    letter-spacing: 1px;
+  }
+
+  /* ── SECTION WRAPPER ── */
+  .section {
+    position: relative; z-index: 10;
+    margin: 0 32px 24px;
+    padding: 18px 24px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--panel);
+  }
+
+  .section-title {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .section-title span.icon { font-size: 18px; }
+
+  .section-title .text {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px; font-weight: 800;
+    color: #fff; letter-spacing: 0.5px;
+  }
+
+  .section-title .badge-sm {
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1px;
+  }
+
+  /* ── SPACER ── */
+  .spacer { height: 24px; }
+
+  /* ── ARCHITECTURE LAYERS ── */
+  .arch-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .arch-layer {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid;
+  }
+
+  .arch-layer-head {
+    padding: 10px 18px;
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 13px;
+  }
+
+  .arch-layer-body {
+    padding: 14px 18px;
+    font-size: 11px; line-height: 1.8;
+    color: #cbd5e1;
+  }
+
+  .arch-layer-body .files {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 8px;
+  }
+
+  .file-chip {
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    border: 1px solid;
+  }
+
+  /* ── ENDPOINT TABLE ── */
+  .endpoint-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+
+  .endpoint-table th {
+    padding: 8px 12px;
+    text-align: left;
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,.02);
+  }
+
+  .endpoint-table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+    vertical-align: middle;
+    color: #cbd5e1;
+  }
+
+  .endpoint-table tr:last-child td { border-bottom: none; }
+  .endpoint-table tr:hover td { background: rgba(255,255,255,.02); }
+
+  .method {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    min-width: 52px;
+    text-align: center;
+  }
+
+  .method-get    { background: rgba(16,185,129,.15);  color: #10b981; border: 1px solid rgba(16,185,129,.3);  }
+  .method-post   { background: rgba(0,212,255,.12);   color: #00d4ff; border: 1px solid rgba(0,212,255,.3);   }
+  .method-put    { background: rgba(245,158,11,.12);  color: #f59e0b; border: 1px solid rgba(245,158,11,.3);  }
+  .method-delete { background: rgba(239,68,68,.12);   color: #ef4444; border: 1px solid rgba(239,68,68,.3);   }
+  .method-patch  { background: rgba(124,58,237,.12);  color: #a78bfa; border: 1px solid rgba(124,58,237,.3);  }
+
+  .route-code {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent1);
+    font-size: 11px;
+  }
+
+  .auth-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+
+  .auth-public  { background: rgba(16,185,129,.08);  color: #10b981; border: 1px solid rgba(16,185,129,.2);  }
+  .auth-jwt     { background: rgba(245,158,11,.08);  color: #f59e0b; border: 1px solid rgba(245,158,11,.2);  }
+  .auth-admin   { background: rgba(239,68,68,.08);   color: #ef4444; border: 1px solid rgba(239,68,68,.2);   }
+
+  /* ── TECH CARDS ── */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .tech-card {
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 1px solid;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+
+  .tech-card .tc-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .tech-card .tc-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .tech-card .tc-version {
+    font-size: 10px;
+    opacity: .6;
+  }
+
+  /* ── FLOW CARDS (Retos) ── */
+  .reto-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .reto-card {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid;
+  }
+
+  .reto-card-head {
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 12px;
+  }
+
+  .reto-card-body {
+    padding: 14px 16px;
+    font-size: 11px;
+    line-height: 1.9;
+    color: #94a3b8;
+  }
+
+  .reto-card-body ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .reto-card-body ul li::before {
+    content: '▸ ';
+    opacity: .5;
+  }
+
+  .reto-card-body code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(255,255,255,.06);
+  }
+
+  /* ── DETAIL ROWS ── */
+  .detail-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+
+  .detail-row:last-child { margin-bottom: 0; }
+
+  .detail-box {
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,.07);
+    background: rgba(255,255,255,.02);
+    font-size: 11px;
+    line-height: 1.8;
+    color: #94a3b8;
+  }
+
+  .detail-box .db-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .detail-box code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(255,255,255,.06);
+  }
+
+  /* ── DOCKER SECTION ── */
+  .docker-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .docker-card {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(0,212,255,.2);
+    background: rgba(0,212,255,.03);
+  }
+
+  .docker-card-head {
+    padding: 10px 16px;
+    background: rgba(0,212,255,.07);
+    border-bottom: 1px solid rgba(0,212,255,.15);
+    font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 12px;
+    color: var(--accent1);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .docker-card-body {
+    padding: 14px 16px;
+    font-size: 11px;
+    line-height: 1.9;
+    color: #cbd5e1;
+  }
+
+  .docker-card-body code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(0,212,255,.08);
+    color: var(--accent1);
+  }
+
+  /* ── TEST CARDS ── */
+  .test-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  .test-card {
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(16,185,129,.2);
+    background: rgba(16,185,129,.04);
+    font-size: 11px;
+    line-height: 1.8;
+    color: #94a3b8;
+  }
+
+  .test-card .tc-head {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 12px;
+    color: var(--accent3);
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .test-card code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(16,185,129,.08);
+    color: var(--accent3);
+  }
+
+  .test-case {
+    display: flex; align-items: flex-start; gap: 6px;
+    margin-bottom: 4px;
+    font-size: 10px;
+    color: #94a3b8;
+  }
+
+  .test-case::before { content: '✓'; color: var(--accent3); flex-shrink: 0; }
+
+  /* ── USERS TABLE ── */
+  .users-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+
+  .users-table th {
+    padding: 8px 14px;
+    text-align: left;
+    font-family: 'Syne', sans-serif;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,.02);
+  }
+
+  .users-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+    color: #cbd5e1;
+  }
+
+  .users-table tr:last-child td { border-bottom: none; }
+
+  .role-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  .role-admin { background: rgba(239,68,68,.1); color: #ef4444; border: 1px solid rgba(239,68,68,.25); }
+  .role-aux   { background: rgba(0,212,255,.1);  color: #00d4ff; border: 1px solid rgba(0,212,255,.25); }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative; z-index: 10;
+    padding: 20px 48px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 12px;
+    color: #475569;
+    background: rgba(0,0,0,.2);
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    text-align: center;
+    color: #1e2d45;
+    font-size: 18px;
+    line-height: 1;
+    margin: 4px 0;
+  }
+
+  .info-note {
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 11px;
+    line-height: 1.7;
+    display: flex; align-items: flex-start; gap: 10px;
+    margin-top: 14px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════ -->
+<header>
+  <div class="header-top" style="width:100%;">
+    <div class="title-main">FULLSTACK</div>
+    <div class="title-sub">.NET</div>
+  </div>
+</header>
+
+<!-- SUBTITLE BAR -->
+<div class="subtitle-bar">
+  <span class="label">Proyecto</span>
+  <span class="sep">│</span>
+  <span class="name">AgremiacionComercio API</span>
+  <span class="tag">ASP.NET CORE 8</span>
+  <span class="tag-purple">CLEAN ARCHITECTURE</span>
+  <span class="tag" style="border-color:rgba(16,185,129,.3);color:#10b981;background:rgba(16,185,129,.07);">ENTITY FRAMEWORK</span>
+  <span class="tag" style="border-color:rgba(245,158,11,.3);color:#f59e0b;background:rgba(245,158,11,.07);">JWT · ROLES</span>
+  <span style="margin-left:auto;font-size:10px;color:#475569;">Retos 05 → 08</span>
+</div>
+
+<div class="spacer"></div>
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 1 — ARQUITECTURA CLEAN
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">🏗️</span>
+    <span class="text">Arquitectura de la Solución</span>
+    <span class="badge-sm" style="background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.3);color:#a78bfa;">CLEAN ARCHITECTURE · 4 CAPAS</span>
+  </div>
+
+  <div class="arch-grid">
+
+    <!-- Domain -->
+    <div class="arch-layer" style="border-color:rgba(251,191,36,.25);background:rgba(251,191,36,.03);">
+      <div class="arch-layer-head" style="background:rgba(251,191,36,.08);border-bottom:1px solid rgba(251,191,36,.15);color:#fbbf24;">
+        <span>🔶</span>
+        <span>AgremiacionComercio.Domain</span>
+        <span style="margin-left:auto;font-size:9px;opacity:.6;font-family:'JetBrains Mono',monospace;">CAPA NÚCLEO · Sin dependencias externas</span>
+      </div>
+      <div class="arch-layer-body">
+        <div style="color:#94a3b8;margin-bottom:8px;">Entidades del negocio, interfaces de repositorios y reglas de dominio puro. No depende de ninguna otra capa.</div>
+        <div class="files">
+          <span class="file-chip" style="border-color:rgba(251,191,36,.2);color:#fbbf24;background:rgba(251,191,36,.06);">Comerciante.cs</span>
+          <span class="file-chip" style="border-color:rgba(251,191,36,.2);color:#fbbf24;background:rgba(251,191,36,.06);">Establecimiento.cs</span>
+          <span class="file-chip" style="border-color:rgba(251,191,36,.2);color:#fbbf24;background:rgba(251,191,36,.06);">Usuario.cs</span>
+          <span class="file-chip" style="border-color:rgba(251,191,36,.2);color:#fbbf24;background:rgba(251,191,36,.06);">Rol.cs</span>
+          <span class="file-chip" style="border-color:rgba(251,191,36,.2);color:#fbbf24;background:rgba(251,191,36,.06);">Municipio.cs</span>
+          <span class="file-chip" style="border-color:rgba(251,191,36,.2);color:#fbbf24;background:rgba(251,191,36,.06);">Estado.cs</span>
+          <span class="file-chip" style="border-color:rgba(251,191,36,.2);color:#fbbf24;background:rgba(251,191,36,.06);">BaseAuditEntity.cs</span>
+          <span class="file-chip" style="border-color:rgba(251,191,36,.2);color:#fbbf24;background:rgba(251,191,36,.06);">IComercianteRepository.cs</span>
+          <span class="file-chip" style="border-color:rgba(251,191,36,.2);color:#fbbf24;background:rgba(251,191,36,.06);">IUsuarioRepository.cs</span>
+          <span class="file-chip" style="border-color:rgba(251,191,36,.2);color:#fbbf24;background:rgba(251,191,36,.06);">IMunicipioRepository.cs</span>
+          <span class="file-chip" style="border-color:rgba(251,191,36,.2);color:#fbbf24;background:rgba(251,191,36,.06);">IRepository&lt;T&gt;.cs</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider">▼</div>
+
+    <!-- Application -->
+    <div class="arch-layer" style="border-color:rgba(0,212,255,.25);background:rgba(0,212,255,.02);">
+      <div class="arch-layer-head" style="background:rgba(0,212,255,.08);border-bottom:1px solid rgba(0,212,255,.15);color:var(--accent1);">
+        <span>⚙️</span>
+        <span>AgremiacionComercio.Application</span>
+        <span style="margin-left:auto;font-size:9px;opacity:.6;font-family:'JetBrains Mono',monospace;">CASOS DE USO · Depende solo de Domain</span>
+      </div>
+      <div class="arch-layer-body">
+        <div style="color:#94a3b8;margin-bottom:8px;">DTOs de entrada/salida, interfaces de servicios, validadores con FluentValidation y wrapper de respuesta HTTP estandarizado.</div>
+        <div class="files">
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">ApiResponse&lt;T&gt;.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">PagedResponse&lt;T&gt;.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">LoginRequest.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">CreateComercianteRequest.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">UpdateComercianteRequest.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">PatchEstadoRequest.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">ComercianteFilterRequest.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">LoginResponse.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">ComercianteResponse.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">MunicipioResponse.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">ReporteComercianteResponse.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">IAuthService.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">IComercianteService.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">IMunicipioService.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">IReporteService.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">IJwtService.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">CreateComercianteValidator.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">UpdateComercianteValidator.cs</span>
+          <span class="file-chip" style="border-color:rgba(0,212,255,.2);color:#00d4ff;background:rgba(0,212,255,.05);">LoginValidator.cs</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider">▼</div>
+
+    <!-- Infrastructure -->
+    <div class="arch-layer" style="border-color:rgba(124,58,237,.25);background:rgba(124,58,237,.02);">
+      <div class="arch-layer-head" style="background:rgba(124,58,237,.08);border-bottom:1px solid rgba(124,58,237,.15);color:#a78bfa;">
+        <span>🗄️</span>
+        <span>AgremiacionComercio.Infrastructure</span>
+        <span style="margin-left:auto;font-size:9px;opacity:.6;font-family:'JetBrains Mono',monospace;">IMPLEMENTACIÓN · EF Core + Servicios externos</span>
+      </div>
+      <div class="arch-layer-body">
+        <div style="color:#94a3b8;margin-bottom:8px;">Implementa los contratos del dominio. Contiene el <code>AppDbContext</code>, configuraciones EF, repositorios concretos, servicios de JWT, autenticación, cache y reporte.</div>
+        <div class="files">
+          <span class="file-chip" style="border-color:rgba(124,58,237,.25);color:#a78bfa;background:rgba(124,58,237,.06);">AppDbContext.cs</span>
+          <span class="file-chip" style="border-color:rgba(124,58,237,.25);color:#a78bfa;background:rgba(124,58,237,.06);">ComercianteConfiguration.cs</span>
+          <span class="file-chip" style="border-color:rgba(124,58,237,.25);color:#a78bfa;background:rgba(124,58,237,.06);">EstablecimientoConfiguration.cs</span>
+          <span class="file-chip" style="border-color:rgba(124,58,237,.25);color:#a78bfa;background:rgba(124,58,237,.06);">UsuarioConfiguration.cs</span>
+          <span class="file-chip" style="border-color:rgba(124,58,237,.25);color:#a78bfa;background:rgba(124,58,237,.06);">MunicipioConfiguration.cs</span>
+          <span class="file-chip" style="border-color:rgba(124,58,237,.25);color:#a78bfa;background:rgba(124,58,237,.06);">EstadoConfiguration.cs</span>
+          <span class="file-chip" style="border-color:rgba(124,58,237,.25);color:#a78bfa;background:rgba(124,58,237,.06);">RolConfiguration.cs</span>
+          <span class="file-chip" style="border-color:rgba(124,58,237,.25);color:#a78bfa;background:rgba(124,58,237,.06);">BaseRepository&lt;T&gt;.cs</span>
+          <span class="file-chip" style="border-color:rgba(124,58,237,.25);color:#a78bfa;background:rgba(124,58,237,.06);">ComercianteRepository.cs</span>
+          <span class="file-chip" style="border-color:rgba(124,58,237,.25);color:#a78bfa;background:rgba(124,58,237,.06);">UsuarioRepository.cs</span>
+          <span class="file-chip" style="border-color:rgba(124,58,237,.25);color:#a78bfa;background:rgba(124,58,237,.06);">MunicipioRepository.cs</span>
+          <span class="file-chip" style="border-color:rgba(124,58,237,.25);color:#a78bfa;background:rgba(124,58,237,.06);">JwtService.cs</span>
+          <span class="file-chip" style="border-color:rgba(124,58,237,.25);color:#a78bfa;background:rgba(124,58,237,.06);">AuthService.cs</span>
+          <span class="file-chip" style="border-color:rgba(124,58,237,.25);color:#a78bfa;background:rgba(124,58,237,.06);">ComercianteService.cs</span>
+          <span class="file-chip" style="border-color:rgba(124,58,237,.25);color:#a78bfa;background:rgba(124,58,237,.06);">MunicipioService.cs</span>
+          <span class="file-chip" style="border-color:rgba(124,58,237,.25);color:#a78bfa;background:rgba(124,58,237,.06);">ReporteService.cs</span>
+          <span class="file-chip" style="border-color:rgba(124,58,237,.25);color:#a78bfa;background:rgba(124,58,237,.06);">DependencyInjection.cs</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider">▼</div>
+
+    <!-- API -->
+    <div class="arch-layer" style="border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.02);">
+      <div class="arch-layer-head" style="background:rgba(16,185,129,.08);border-bottom:1px solid rgba(16,185,129,.15);color:#10b981;">
+        <span>🌐</span>
+        <span>AgremiacionComercio.API</span>
+        <span style="margin-left:auto;font-size:9px;opacity:.6;font-family:'JetBrains Mono',monospace;">PRESENTACIÓN · ASP.NET Core Web API</span>
+      </div>
+      <div class="arch-layer-body">
+        <div style="color:#94a3b8;margin-bottom:8px;">Punto de entrada HTTP. Controllers, middleware de excepciones, configuración de Swagger, JWT, CORS y pipeline de ASP.NET Core.</div>
+        <div class="files">
+          <span class="file-chip" style="border-color:rgba(16,185,129,.25);color:#10b981;background:rgba(16,185,129,.06);">Program.cs</span>
+          <span class="file-chip" style="border-color:rgba(16,185,129,.25);color:#10b981;background:rgba(16,185,129,.06);">AuthController.cs</span>
+          <span class="file-chip" style="border-color:rgba(16,185,129,.25);color:#10b981;background:rgba(16,185,129,.06);">ComerciantesController.cs</span>
+          <span class="file-chip" style="border-color:rgba(16,185,129,.25);color:#10b981;background:rgba(16,185,129,.06);">MunicipiosController.cs</span>
+          <span class="file-chip" style="border-color:rgba(16,185,129,.25);color:#10b981;background:rgba(16,185,129,.06);">ReporteController.cs</span>
+          <span class="file-chip" style="border-color:rgba(16,185,129,.25);color:#10b981;background:rgba(16,185,129,.06);">ExceptionMiddleware.cs</span>
+          <span class="file-chip" style="border-color:rgba(16,185,129,.25);color:#10b981;background:rgba(16,185,129,.06);">appsettings.json</span>
+          <span class="file-chip" style="border-color:rgba(16,185,129,.25);color:#10b981;background:rgba(16,185,129,.06);">appsettings.Development.json</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 2 — RETOS IMPLEMENTADOS
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">🎯</span>
+    <span class="text">Retos Implementados</span>
+    <span class="badge-sm" style="background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);color:var(--accent1);">RETO 05 · 06 · 07 · 08</span>
+  </div>
+
+  <div class="reto-grid">
+
+    <!-- Reto 05 -->
+    <div class="reto-card" style="border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.02);">
+      <div class="reto-card-head" style="background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.15);color:#ef4444;">
+        <span>🔐</span>
+        <span>Reto 05 — Web API · Seguridad</span>
+      </div>
+      <div class="reto-card-body">
+        <ul>
+          <li>Endpoint público <code>POST /api/auth/login</code> sin token</li>
+          <li>JWT con expiración de <strong style="color:#e2e8f0;">1 hora</strong></li>
+          <li>Roles: <code>Administrador</code> y <code>Auxiliar de Registro</code></li>
+          <li>Claims: <code>NameIdentifier</code>, <code>Name</code>, <code>Email</code>, <code>Role</code></li>
+          <li>Política CORS configurada por orígenes permitidos</li>
+          <li>Contraseñas hasheadas con <strong style="color:#e2e8f0;">BCrypt</strong></li>
+          <li>Validación con FluentValidation en login</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Reto 06 -->
+    <div class="reto-card" style="border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.02);">
+      <div class="reto-card-head" style="background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.15);color:#f59e0b;">
+        <span>📋</span>
+        <span>Reto 06 — Web API · Listas de Valores</span>
+      </div>
+      <div class="reto-card-body">
+        <ul>
+          <li>Endpoint privado <code>GET /api/municipios</code></li>
+          <li>Requiere token JWT para ejecución</li>
+          <li><strong style="color:#e2e8f0;">Cache en Memoria</strong> con <code>IMemoryCache</code> (24 h)</li>
+          <li>Una sola consulta a BD por ciclo de vida del cache</li>
+          <li>Respuesta estandarizada con <code>ApiResponse&lt;T&gt;</code></li>
+          <li>Datos ordenados alfabéticamente por nombre</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Reto 07 -->
+    <div class="reto-card" style="border-color:rgba(0,212,255,.25);background:rgba(0,212,255,.02);">
+      <div class="reto-card-head" style="background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.15);color:#00d4ff;">
+        <span>🏪</span>
+        <span>Reto 07 — Web API · CRUD Comerciante</span>
+      </div>
+      <div class="reto-card-body">
+        <ul>
+          <li>Consulta paginada con filtros: nombre, fecha y estado</li>
+          <li>Página por defecto: <strong style="color:#e2e8f0;">5 registros</strong></li>
+          <li>GET por Id con carga de relaciones (Municipio, Estado)</li>
+          <li>POST / PUT con validaciones FluentValidation</li>
+          <li>DELETE restringido a rol <code>Administrador</code></li>
+          <li>PATCH <code>/estado</code> con método HTTP PATCH</li>
+          <li>Auditoría automática: fecha + usuario del token JWT</li>
+          <li>Todos los endpoints usan <code>ApiResponse&lt;T&gt;</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Reto 08 -->
+    <div class="reto-card" style="border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.02);">
+      <div class="reto-card-head" style="background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.15);color:#10b981;">
+        <span>📊</span>
+        <span>Reto 08 — Web API · Reporte CSV</span>
+      </div>
+      <div class="reto-card-body">
+        <ul>
+          <li>Solo accesible con rol <code>Administrador</code></li>
+          <li>Consume el SP <code>sp_ReporteComerciantes</code> del Reto 04 SQL</li>
+          <li>Separador pipe <code>|</code> barra vertical</li>
+          <li>Campos calculados: establecimientos, ingresos, empleados</li>
+          <li>Descarga como <code>.csv</code> con nombre dinámico por fecha</li>
+          <li>También disponible en JSON <code>GET /api/reporte/comerciantes</code></li>
+          <li>Solo comerciantes con estado <strong style="color:#e2e8f0;">Activo</strong></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 3 — ENDPOINTS DETALLE
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">🛣️</span>
+    <span class="text">Mapa de Endpoints</span>
+    <span class="badge-sm" style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);color:#10b981;">10 ENDPOINTS</span>
+  </div>
+
+  <table class="endpoint-table">
+    <thead>
+      <tr>
+        <th>Método</th>
+        <th>Ruta</th>
+        <th>Descripción</th>
+        <th>Autenticación</th>
+        <th>Rol requerido</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="method method-post">POST</span></td>
+        <td><code class="route-code">/api/auth/login</code></td>
+        <td>Autenticación — retorna JWT token (1 hora)</td>
+        <td><span class="auth-badge auth-public">🔓 Público</span></td>
+        <td style="color:var(--muted);">—</td>
+        
+      </tr>
+      <tr>
+        <td><span class="method method-get">GET</span></td>
+        <td><code class="route-code">/api/municipios</code></td>
+        <td>Lista de municipios (con cache en memoria)</td>
+        <td><span class="auth-badge auth-jwt">🔑 JWT</span></td>
+        <td style="color:var(--muted);">Todos</td>
+        
+      </tr>
+      <tr>
+        <td><span class="method method-get">GET</span></td>
+        <td><code class="route-code">/api/comerciantes</code></td>
+        <td>Consulta paginada con filtros opcionales</td>
+        <td><span class="auth-badge auth-jwt">🔑 JWT</span></td>
+        <td style="color:var(--muted);">Todos</td>
+        
+      </tr>
+      <tr>
+        <td><span class="method method-get">GET</span></td>
+        <td><code class="route-code">/api/comerciantes/{id}</code></td>
+        <td>Obtiene comerciante por Id</td>
+        <td><span class="auth-badge auth-jwt">🔑 JWT</span></td>
+        <td style="color:var(--muted);">Todos</td>
+        
+      </tr>
+      <tr>
+        <td><span class="method method-post">POST</span></td>
+        <td><code class="route-code">/api/comerciantes</code></td>
+        <td>Crea un nuevo comerciante (con validaciones)</td>
+        <td><span class="auth-badge auth-jwt">🔑 JWT</span></td>
+        <td style="color:var(--muted);">Todos</td>
+        
+      </tr>
+      <tr>
+        <td><span class="method method-put">PUT</span></td>
+        <td><code class="route-code">/api/comerciantes/{id}</code></td>
+        <td>Actualiza todos los campos del comerciante</td>
+        <td><span class="auth-badge auth-jwt">🔑 JWT</span></td>
+        <td style="color:var(--muted);">Todos</td>
+        
+      </tr>
+      <tr>
+        <td><span class="method method-delete">DELETE</span></td>
+        <td><code class="route-code">/api/comerciantes/{id}</code></td>
+        <td>Elimina un comerciante</td>
+        <td><span class="auth-badge auth-admin">🛡️ JWT + Admin</span></td>
+        <td style="color:#ef4444;">Administrador</td>
+        
+      </tr>
+      <tr>
+        <td><span class="method method-patch">PATCH</span></td>
+        <td><code class="route-code">/api/comerciantes/{id}/estado</code></td>
+        <td>Modifica únicamente el estado del comerciante</td>
+        <td><span class="auth-badge auth-jwt">🔑 JWT</span></td>
+        <td style="color:var(--muted);">Todos</td>
+        
+      </tr>
+      <tr>
+        <td><span class="method method-get">GET</span></td>
+        <td><code class="route-code">/api/reporte/comerciantes</code></td>
+        <td>Reporte de comerciantes activos en JSON</td>
+        <td><span class="auth-badge auth-admin">🛡️ JWT + Admin</span></td>
+        <td style="color:#ef4444;">Administrador</td>
+        
+      </tr>
+      <tr>
+        <td><span class="method method-get">GET</span></td>
+        <td><code class="route-code">/api/reporte/comerciantes/csv</code></td>
+        <td>Descarga archivo .csv separado por pipe |</td>
+        <td><span class="auth-badge auth-admin">🛡️ JWT + Admin</span></td>
+        <td style="color:#ef4444;">Administrador</td>
+        
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 4 — SEGURIDAD JWT
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">🔐</span>
+    <span class="text">Seguridad — JWT &amp; Roles</span>
+    <span class="badge-sm" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#ef4444;">RETO 05</span>
+  </div>
+
+  <div class="detail-row">
+
+    <div class="detail-box" style="border-color:rgba(245,158,11,.2);background:rgba(245,158,11,.03);">
+      <div class="db-label" style="color:#f59e0b;">⚙️ Configuración JWT</div>
+      <div style="color:#94a3b8;line-height:1.9;font-size:11px;">
+        <div>📌 <strong style="color:#e2e8f0;">Algoritmo:</strong> <code>HmacSha256</code></div>
+        <div>📌 <strong style="color:#e2e8f0;">Expiración:</strong> <code>1 hora</code> desde la emisión</div>
+        <div>📌 <strong style="color:#e2e8f0;">Validaciones:</strong> Issuer ✓ · Audience ✓ · Lifetime ✓ · Firma ✓</div>
+        <div>📌 <strong style="color:#e2e8f0;">Claims incluidos:</strong> <code>NameIdentifier</code>, <code>Name</code>, <code>Email</code>, <code>Role</code></div>
+        <div>📌 <strong style="color:#e2e8f0;">Contraseñas:</strong> hash <code>BCrypt</code> en capa Application</div>
+      </div>
+    </div>
+
+    <div class="detail-box" style="border-color:rgba(124,58,237,.2);background:rgba(124,58,237,.03);">
+      <div class="db-label" style="color:#a78bfa;">👥 Autorización por Roles</div>
+      <div style="color:#94a3b8;line-height:1.9;font-size:11px;">
+        <div>📌 <code>[Authorize]</code> en todos los endpoints privados</div>
+        <div>📌 <code>[Authorize(Roles = "Administrador")]</code> en DELETE y Reporte</div>
+        <div>📌 <strong style="color:#e2e8f0;">Rol Administrador:</strong> acceso total, incluye eliminación y reportes</div>
+        <div>📌 <strong style="color:#e2e8f0;">Rol Auxiliar:</strong> puede consultar, crear y actualizar comerciantes</div>
+        <div>📌 El rol se extrae del claim <code>ClaimTypes.Role</code> en el token</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="detail-row">
+
+    <div class="detail-box" style="border-color:rgba(0,212,255,.15);">
+      <div class="db-label">🌐 CORS Policy</div>
+      <div style="color:#94a3b8;line-height:1.9;font-size:11px;">
+        <div>Política nombrada <code>CorsPolicy</code> configurada en <code>Program.cs</code></div>
+        <div>📌 Orígenes: configurables desde <code>appsettings.json</code></div>
+        <div>📌 Permite cualquier método y cualquier header</div>
+        <div>📌 Soporta <code>AllowCredentials</code> para envío de cookies/auth</div>
+        <div>📌 Por defecto: <code>localhost:3000</code> y <code>localhost:4200</code></div>
+      </div>
+    </div>
+
+    <div class="detail-box" style="border-color:rgba(16,185,129,.15);">
+      <div class="db-label">🛡️ Middleware de Excepciones</div>
+      <div style="color:#94a3b8;line-height:1.9;font-size:11px;">
+        <div><code>ExceptionMiddleware</code> captura cualquier excepción no controlada</div>
+        <div>📌 Retorna siempre <code>ApiResponse&lt;T&gt;</code> estandarizado</div>
+        <div>📌 Log del error con <code>ILogger</code></div>
+        <div>📌 Respuesta HTTP <code>500</code> con mensaje genérico al cliente</div>
+        <div>📌 Registrado como el primer middleware del pipeline</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Tabla usuarios semilla -->
+  <div style="margin-top:16px;">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:#94a3b8;margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+      <span>👤</span> Usuarios por Defecto — Datos Semilla (del Reto 03 SQL)
+    </div>
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Correo Electrónico</th>
+          <th>Contraseña</th>
+          <th>Rol</th>
+          <th>Accesos permitidos</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:#e2e8f0;">Admin Sistema</td>
+          <td><code style="color:#00d4ff;font-size:10px;">admin@agremiacion.com</code></td>
+          <td><code style="color:#fbbf24;font-size:10px;">Admin$2026!</code></td>
+          <td><span class="role-badge role-admin">Administrador</span></td>
+          <td style="font-size:10px;color:#94a3b8;">Todos los endpoints + DELETE + Reportes CSV</td>
+        </tr>
+        <tr>
+          <td style="color:#e2e8f0;">Auxiliar Registro</td>
+          <td><code style="color:#00d4ff;font-size:10px;">auxiliar@agremiacion.com</code></td>
+          <td><code style="color:#fbbf24;font-size:10px;">Aux1liar#2026</code></td>
+          <td><span class="role-badge role-aux">Auxiliar de Registro</span></td>
+          <td style="font-size:10px;color:#94a3b8;">Consulta, creación y actualización de comerciantes</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 5 — EF CORE & BASE DE DATOS
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">🗄️</span>
+    <span class="text">Entity Framework Core — Configuración</span>
+    <span class="badge-sm" style="background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);color:#a78bfa;">EF CORE 8 · SQL SERVER</span>
+  </div>
+
+  <div class="detail-row">
+
+    <div class="detail-box" style="border-color:rgba(124,58,237,.2);">
+      <div class="db-label" style="color:#a78bfa;">📐 Configuraciones IEntityTypeConfiguration</div>
+      <div style="color:#94a3b8;font-size:11px;line-height:1.9;">
+        Cada entidad tiene su propia clase de configuración aplicada con
+        <code>ApplyConfigurationsFromAssembly</code> en el <code>AppDbContext</code>.
+        Esto mantiene las configuraciones organizadas y separadas del contexto principal.
+        <div style="margin-top:8px;">
+          <div>🔷 <code>ComercianteConfiguration</code> — índices en NombreRazonSocial, FechaRegistro, EstadoId</div>
+          <div>🔷 <code>UsuarioConfiguration</code> — índice único en CorreoElectronico</div>
+          <div>🔷 <code>MunicipioConfiguration</code> — índice en Nombre para búsquedas</div>
+          <div>🔷 Todos los IDs con <code>UseIdentityColumn()</code> para compatibilidad con BD existente</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-box" style="border-color:rgba(0,212,255,.2);">
+      <div class="db-label" style="color:#00d4ff;">🔗 Mapeo con la BD del Reto SQL</div>
+      <div style="color:#94a3b8;font-size:11px;line-height:1.9;">
+        El <code>AppDbContext</code> mapea <strong style="color:#e2e8f0;">exactamente</strong> el mismo modelo
+        construido en los Retos 01–04 de la fase SQL.
+        No se usan migraciones EF — la BD ya existe y fue creada con los scripts SQL.
+        <div style="margin-top:8px;">
+          <div>✓ <code>ToTable("Comerciante")</code> — nombres exactos de las tablas SQL</div>
+          <div>✓ <code>decimal(18,2)</code> en Ingresos de Establecimiento</div>
+          <div>✓ <code>datetime2(0)</code> en campos de auditoría</div>
+          <div>✓ <code>date</code> en FechaRegistro del Comerciante</div>
+          <div>✓ <code>NVARCHAR</code> con longitudes idénticas al DDL SQL</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="info-note" style="background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.25);border-left:4px solid #f59e0b;">
+    <span style="font-size:18px;flex-shrink:0;">⚠️</span>
+    <div style="font-size:11px;line-height:1.7;color:#cbd5e1;">
+      <strong style="color:#f59e0b;font-family:'Syne',sans-serif;">Nota sobre Auditoría —</strong>
+      Los campos <code>FechaActualizacion</code> y <code>UsuarioAuditoria</code> son actualizados directamente
+      desde la capa de servicio en .NET (no dependen del trigger SQL). Esto permite que el API envíe el correo
+      del usuario autenticado (extraído del JWT) como <code>UsuarioAuditoria</code>, en lugar del usuario
+      de sesión SQL Server (<code>SYSTEM_USER</code>). Los triggers del Reto 02 siguen activos como respaldo.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 6 — VALIDACIONES
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">✅</span>
+    <span class="text">Validaciones — FluentValidation</span>
+    <span class="badge-sm" style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);color:#10b981;">FLUENT VALIDATION 11</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+
+    <div class="detail-box" style="border-color:rgba(0,212,255,.2);">
+      <div class="db-label" style="color:#00d4ff;">CreateComercianteValidator</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        <div>✓ <code>NombreRazonSocial</code> — requerido, máx 255 chars</div>
+        <div>✓ <code>MunicipioId</code> — mayor que 0</div>
+        <div>✓ <code>EstadoId</code> — mayor que 0</div>
+        <div>✓ <code>CorreoElectronico</code> — formato email (opcional)</div>
+        <div>✓ <code>Telefono</code> — máx 20 chars (opcional)</div>
+        <div>✓ <code>FechaRegistro</code> — no puede ser futura</div>
+      </div>
+    </div>
+
+    <div class="detail-box" style="border-color:rgba(124,58,237,.2);">
+      <div class="db-label" style="color:#a78bfa;">UpdateComercianteValidator</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        <div>✓ Mismas reglas que el validator de creación</div>
+        <div>✓ Aplicado en endpoint <code>PUT /{id}</code></div>
+        <div>✓ Errores retornados en <code>ApiResponse.Errors[]</code></div>
+        <div>✓ Respuesta <code>400 Bad Request</code> si falla</div>
+        <div style="margin-top:6px;color:#475569;font-size:10px;">Separar Create/Update permite evolucionar las reglas de cada operación de forma independiente.</div>
+      </div>
+    </div>
+
+    <div class="detail-box" style="border-color:rgba(245,158,11,.2);">
+      <div class="db-label" style="color:#f59e0b;">LoginValidator</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        <div>✓ <code>CorreoElectronico</code> — requerido + formato email</div>
+        <div>✓ <code>Contrasena</code> — requerido, no vacío</div>
+        <div>✓ Aplicado en endpoint <code>POST /auth/login</code></div>
+        <div>✓ Falla antes de consultar la BD</div>
+        <div style="margin-top:6px;color:#475569;font-size:10px;">Registrado automáticamente con <code>AddValidatorsFromAssemblyContaining</code> en el DI.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 7 — TESTS UNITARIOS
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">🧪</span>
+    <span class="text">Pruebas Unitarias — xUnit</span>
+    <span class="badge-sm" style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);color:#10b981;">XUNIT · MOQ · FLUENTASSERTIONS</span>
+  </div>
+
+  <div class="test-grid">
+
+    <div class="test-card">
+      <div class="tc-head">
+        <span>🔑</span>
+        <code>AuthServiceTests</code>
+      </div>
+      <div class="test-case">Login con credenciales válidas → retorna token</div>
+      <div class="test-case">Login con contraseña incorrecta → retorna null</div>
+      <div class="test-case">Login con correo inexistente → retorna null</div>
+      <div style="margin-top:8px;font-size:10px;color:#475569;">Mock: <code>IUsuarioRepository</code> + <code>IJwtService</code></div>
+    </div>
+
+    <div class="test-card">
+      <div class="tc-head">
+        <span>🏪</span>
+        <code>ComercianteServiceTests</code>
+      </div>
+      <div class="test-case">GetById existente → retorna response mapeado</div>
+      <div class="test-case">GetById no existente → retorna null</div>
+      <div class="test-case">Create con datos válidos → llama AddAsync</div>
+      <div class="test-case">Delete existente → retorna true</div>
+      <div class="test-case">Delete no existente → retorna false</div>
+      <div class="test-case">PatchEstado → actualiza EstadoId</div>
+      <div style="margin-top:8px;font-size:10px;color:#475569;">Mock: <code>IComercianteRepository</code></div>
+    </div>
+
+    <div class="test-card">
+      <div class="tc-head">
+        <span>✅</span>
+        <code>ValidatorTests</code>
+      </div>
+      <div class="test-case">Datos válidos → IsValid = true</div>
+      <div class="test-case">Nombre vacío → error en NombreRazonSocial</div>
+      <div class="test-case">Correo inválido → error en CorreoElectronico</div>
+      <div class="test-case">Fecha futura → error en FechaRegistro</div>
+      <div class="test-case">MunicipioId = 0 → error en MunicipioId</div>
+      <div style="margin-top:8px;font-size:10px;color:#475569;">Sin mocks — validación directa de reglas</div>
+    </div>
+
+  </div>
+
+  <div style="margin-top:14px;padding:12px 16px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);font-size:11px;color:#94a3b8;line-height:1.8;">
+    <span style="color:#e2e8f0;font-weight:600;">▸ Ejecutar todos los tests:</span>
+    &nbsp;
+    <code style="color:#10b981;background:rgba(16,185,129,.08);padding:2px 8px;border-radius:4px;">dotnet test tests/AgremiacionComercio.Tests</code>
+    &nbsp;&nbsp;
+    <span style="color:#475569;">Total: 9 casos de prueba</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 8 — DOCKER
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">🐳</span>
+    <span class="text">Docker — Despliegue Contenerizado</span>
+    <span class="badge-sm" style="background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);color:#00d4ff;">DOCKERFILE · DOCKER COMPOSE</span>
+  </div>
+
+  <div class="docker-grid">
+
+    <div class="docker-card">
+      <div class="docker-card-head">
+        <span>📦</span> Dockerfile — Multi-stage Build
+      </div>
+      <div class="docker-card-body">
+        <div style="margin-bottom:8px;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:1px;">Stage 1 — Build</div>
+        <div style="margin-bottom:6px;">Base: <code>mcr.microsoft.com/dotnet/sdk:8.0</code></div>
+        <div style="margin-bottom:6px;">Copia los <code>.csproj</code> primero → restaura dependencias (<strong style="color:#e2e8f0;">cache layer</strong>)</div>
+        <div style="margin-bottom:14px;">Publica en modo <code>Release</code> con <code>--no-restore</code></div>
+        <div style="margin-bottom:8px;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:1px;">Stage 2 — Runtime</div>
+        <div style="margin-bottom:6px;">Base: <code>mcr.microsoft.com/dotnet/aspnet:8.0</code> (imagen mínima)</div>
+        <div style="margin-bottom:6px;">Usuario no-root <code>appuser</code> por seguridad</div>
+        <div>Puerto expuesto: <code>8080</code></div>
+      </div>
+    </div>
+
+    <div class="docker-card">
+      <div class="docker-card-head">
+        <span>🔧</span> docker-compose.yml — Servicios
+      </div>
+      <div class="docker-card-body">
+        <div style="margin-bottom:12px;">
+          <div style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Servicio: sqlserver</div>
+          <div>Imagen: <code>mssql/server:2022-latest</code></div>
+          <div>Puerto: <code>1433:1433</code> · Volumen persistente</div>
+          <div>Healthcheck cada 15s — la API espera que esté listo</div>
+        </div>
+        <div>
+          <div style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Servicio: api</div>
+          <div>Build desde el <code>Dockerfile</code> local</div>
+          <div>Puerto: <code>8080:8080</code></div>
+          <div><code>depends_on</code> con condición <code>service_healthy</code></div>
+          <div>Variables de entorno: ConnectionString, JWT config</div>
+          <div>Política: <code>restart: on-failure</code></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="margin-top:14px;padding:14px 18px;border-radius:8px;border:1px solid rgba(0,212,255,.15);background:rgba(0,212,255,.03);font-size:11px;color:#94a3b8;line-height:2;">
+    <div style="color:#e2e8f0;font-family:'Syne',sans-serif;font-weight:700;font-size:12px;margin-bottom:10px;">🚀 Comandos de despliegue</div>
+    <div>
+      <span style="color:#64748b;font-size:10px;">Levantar todo el stack:</span><br>
+      <code style="color:#00d4ff;background:rgba(0,212,255,.08);padding:3px 10px;border-radius:4px;font-size:11px;">docker-compose up --build</code>
+    </div>
+    <div style="margin-top:8px;">
+      <span style="color:#64748b;font-size:10px;">API disponible en:</span>
+      <code style="color:#10b981;background:rgba(16,185,129,.08);padding:2px 8px;border-radius:4px;">http://localhost:8080</code>
+      &nbsp;·&nbsp;
+      <span style="color:#64748b;font-size:10px;">Swagger UI:</span>
+      <code style="color:#10b981;background:rgba(16,185,129,.08);padding:2px 8px;border-radius:4px;">http://localhost:8080/index.html</code>
+    </div>
+    <div style="margin-top:8px;">
+      <span style="color:#64748b;font-size:10px;">⚠️ Antes de levantar la API, ejecutar los 4 scripts SQL en la BD del contenedor para crear tablas y datos semilla.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 9 — NUGETS (DEPENDENCIAS)
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">📦</span>
+    <span class="text">Paquetes NuGet Utilizados</span>
+  </div>
+
+  <div class="tech-grid">
+
+    <div class="tech-card" style="border-color:rgba(124,58,237,.25);background:rgba(124,58,237,.04);">
+      <div class="tc-label" style="color:#a78bfa;">ORM</div>
+      <div class="tc-name" style="color:#a78bfa;">EF Core SqlServer</div>
+      <div style="color:#94a3b8;font-size:11px;">Microsoft.EntityFrameworkCore.SqlServer</div>
+      <div class="tc-version">v8.0.8</div>
+    </div>
+
+    <div class="tech-card" style="border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.04);">
+      <div class="tc-label" style="color:#ef4444;">SEGURIDAD</div>
+      <div class="tc-name" style="color:#ef4444;">JWT Bearer</div>
+      <div style="color:#94a3b8;font-size:11px;">Microsoft.AspNetCore.Authentication.JwtBearer</div>
+      <div class="tc-version">v8.0.8</div>
+    </div>
+
+    <div class="tech-card" style="border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.04);">
+      <div class="tc-label" style="color:#10b981;">VALIDACIÓN</div>
+      <div class="tc-name" style="color:#10b981;">FluentValidation</div>
+      <div style="color:#94a3b8;font-size:11px;">FluentValidation.AspNetCore</div>
+      <div class="tc-version">v11.9.2 / v11.3.0</div>
+    </div>
+
+    <div class="tech-card" style="border-color:rgba(0,212,255,.25);background:rgba(0,212,255,.04);">
+      <div class="tc-label" style="color:#00d4ff;">DOCUMENTACIÓN</div>
+      <div class="tc-name" style="color:#00d4ff;">Swashbuckle</div>
+      <div style="color:#94a3b8;font-size:11px;">Swashbuckle.AspNetCore (Swagger)</div>
+      <div class="tc-version">v6.7.3</div>
+    </div>
+
+    <div class="tech-card" style="border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.04);">
+      <div class="tc-label" style="color:#f59e0b;">SEGURIDAD</div>
+      <div class="tc-name" style="color:#f59e0b;">BCrypt.Net</div>
+      <div style="color:#94a3b8;font-size:11px;">BCrypt.Net-Next</div>
+      <div class="tc-version">v4.0.3</div>
+    </div>
+
+    <div class="tech-card" style="border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.04);">
+      <div class="tc-label" style="color:#10b981;">TESTING</div>
+      <div class="tc-name" style="color:#10b981;">xUnit</div>
+      <div style="color:#94a3b8;font-size:11px;">xunit + xunit.runner.visualstudio</div>
+      <div class="tc-version">v2.9.0</div>
+    </div>
+
+    <div class="tech-card" style="border-color:rgba(124,58,237,.25);background:rgba(124,58,237,.04);">
+      <div class="tc-label" style="color:#a78bfa;">TESTING</div>
+      <div class="tc-name" style="color:#a78bfa;">Moq</div>
+      <div style="color:#94a3b8;font-size:11px;">Moq — mocks y stubs</div>
+      <div class="tc-version">v4.20.70</div>
+    </div>
+
+    <div class="tech-card" style="border-color:rgba(0,212,255,.25);background:rgba(0,212,255,.04);">
+      <div class="tc-label" style="color:#00d4ff;">TESTING</div>
+      <div class="tc-name" style="color:#00d4ff;">FluentAssertions</div>
+      <div style="color:#94a3b8;font-size:11px;">FluentAssertions</div>
+      <div class="tc-version">v6.12.1</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 10 — PRINCIPIOS SOLID
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">🔷</span>
+    <span class="text">Principios SOLID Aplicados</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+
+    <div class="detail-box" style="border-left:4px solid #00d4ff;border-color:rgba(0,212,255,.2);">
+      <div class="db-label" style="color:#00d4ff;">S — Single Responsibility</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        Cada clase tiene una única responsabilidad. <code>JwtService</code> solo genera tokens.
+        <code>AuthService</code> solo autentica. <code>ComercianteService</code> solo gestiona comerciantes.
+        Los controllers solo coordinan la respuesta HTTP.
+      </div>
+    </div>
+
+    <div class="detail-box" style="border-left:4px solid #10b981;border-color:rgba(16,185,129,.2);">
+      <div class="db-label" style="color:#10b981;">O — Open/Closed</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        Las interfaces permiten extender sin modificar. Se puede cambiar
+        <code>AuthService</code> por otra implementación (OAuth2, AD) sin tocar los
+        controllers ni el resto del sistema.
+      </div>
+    </div>
+
+    <div class="detail-box" style="border-left:4px solid #f59e0b;border-color:rgba(245,158,11,.2);">
+      <div class="db-label" style="color:#f59e0b;">L — Liskov Substitution</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        <code>ComercianteRepository</code> extiende <code>BaseRepository&lt;T&gt;</code>
+        y puede usarse en cualquier lugar donde se espere un <code>IRepository&lt;Comerciante&gt;</code>
+        sin alterar el comportamiento esperado.
+      </div>
+    </div>
+
+    <div class="detail-box" style="border-left:4px solid #a78bfa;border-color:rgba(124,58,237,.2);">
+      <div class="db-label" style="color:#a78bfa;">I — Interface Segregation</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        Las interfaces están segregadas por responsabilidad:
+        <code>IComercianteRepository</code>, <code>IUsuarioRepository</code>,
+        <code>IMunicipioRepository</code>. Ninguna implementación está forzada
+        a depender de métodos que no usa.
+      </div>
+    </div>
+
+    <div class="detail-box" style="border-left:4px solid #ef4444;border-color:rgba(239,68,68,.2);">
+      <div class="db-label" style="color:#ef4444;">D — Dependency Inversion</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        Los servicios dependen de abstracciones (interfaces), nunca de implementaciones concretas.
+        Todo se inyecta vía constructor a través del contenedor DI nativo de ASP.NET Core.
+      </div>
+    </div>
+
+    <div class="detail-box" style="border-left:4px solid #00d4ff;border-color:rgba(0,212,255,.15);">
+      <div class="db-label" style="color:#00d4ff;">DI — Inyección de Dependencias</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        Registrado en <code>DependencyInjection.cs</code> por capa (Application e Infrastructure).
+        Todos los servicios y repositorios con ciclo de vida <code>Scoped</code>.
+        Configuración centralizada y llamada desde <code>Program.cs</code>.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="spacer"></div>
+
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 11 — NOTAS TÉCNICAS
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">
+    <span class="icon">🔧</span>
+    <span class="text">Notas Técnicas — Hallazgos en Pruebas</span>
+    <span class="badge-sm" style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:#f59e0b;">VALIDADO EN EJECUCIÓN</span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+    <div class="detail-box" style="border-left:4px solid #f59e0b;border-color:rgba(245,158,11,.2);">
+      <div class="db-label" style="color:#f59e0b;">⚠️ EF Core + Triggers SQL Server</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        EF Core 8 usa <code>OUTPUT INSERTED</code> por defecto para recuperar el ID generado. SQL Server no permite esta cláusula cuando la tabla tiene triggers activos.<br><br>
+        ✓ Solución en <code>ComercianteConfiguration</code> y <code>EstablecimientoConfiguration</code>:<br>
+        <code>builder.ToTable("...", tb =&gt; tb.UseSqlOutputClause(false))</code>
+      </div>
+    </div>
+
+    <div class="detail-box" style="border-left:4px solid #00d4ff;border-color:rgba(0,212,255,.2);">
+      <div class="db-label" style="color:#00d4ff;">🔑 Migración automática de contraseñas</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        Los datos semilla del Reto SQL tienen contraseñas en texto plano. El <code>AuthService</code> detecta si es texto plano o hash BCrypt.<br><br>
+        ✓ En el primer login migra automáticamente a <strong style="color:#e2e8f0;">BCrypt</strong>.<br>
+        ✓ Desde el segundo login usa <code>BCrypt.Verify()</code> normalmente.
+      </div>
+    </div>
+
+    <div class="detail-box" style="border-left:4px solid #a78bfa;border-color:rgba(124,58,237,.2);">
+      <div class="db-label" style="color:#a78bfa;">📊 SP Reporte — Aliases sin espacios</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        El SP retornaba columnas con espacios (<code>"Cantidad de Empleados"</code>). EF Core <code>FromSqlRaw</code> no puede mapearlas al DTO.<br><br>
+        ✓ Se aplicó <code>ALTER PROCEDURE sp_ReporteComerciantes</code> para usar aliases sin espacios compatibles con el mapeo de EF Core.
+      </div>
+    </div>
+
+    <div class="detail-box" style="border-left:4px solid #10b981;border-color:rgba(16,185,129,.2);">
+      <div class="db-label" style="color:#10b981;">📄 CSV — Encoding UTF-8 con BOM</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        El CSV mostraba caracteres incorrectos en Excel (<code>MedellÃ­n</code>, <code>CafÃ©</code>).<br><br>
+        ✓ Solución: agregar <strong style="color:#e2e8f0;">BOM UTF-8</strong> al inicio del archivo.<br>
+        <code>Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(...))</code>
+      </div>
+    </div>
+
+    <div class="detail-box" style="border-left:4px solid #ef4444;border-color:rgba(239,68,68,.2);">
+      <div class="db-label" style="color:#ef4444;">🔗 FluentValidation — Registro en capa correcta</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        <code>AddValidatorsFromAssemblyContaining</code> pertenece a <code>FluentValidation.AspNetCore</code>, paquete solo disponible en el proyecto API.<br><br>
+        ✓ Se movió el registro de <code>Application/DependencyInjection.cs</code> a <code>Program.cs</code> del proyecto API.
+      </div>
+    </div>
+
+    <div class="detail-box" style="border-left:4px solid #00d4ff;border-color:rgba(0,212,255,.15);">
+      <div class="db-label">🔄 Connection String — Windows Authentication</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        En entorno local se usa <strong style="color:#e2e8f0;">Windows Authentication</strong> en lugar de usuario/contraseña SQL.<br><br>
+        ✓ <code>appsettings.Development.json</code>:<br>
+        <code>Server=NOMBRE_SERVIDOR;Database=AgremiacionComercio;</code><br>
+        <code>Trusted_Connection=True;TrustServerCertificate=True;</code>
+      </div>
+    </div>
+
+  
+    <div class="detail-box" style="border-left:4px solid #00d4ff;border-color:rgba(0,212,255,.2);">
+      <div class="db-label" style="color:#00d4ff;">🐳 Docker — Swagger en Production</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        Swagger estaba configurado solo para <code>Development</code>. Al correr con Docker el ambiente es <code>Production</code>, por lo que Swagger no aparecía en <code>localhost:8080</code>.<br><br>
+        ✓ Solución: mover <code>app.UseSwagger()</code> fuera del bloque <code>if (IsDevelopment)</code> para que esté disponible en todos los ambientes.
+      </div>
+    </div>
+
+    <div class="detail-box" style="border-left:4px solid #f59e0b;border-color:rgba(245,158,11,.2);">
+      <div class="db-label" style="color:#f59e0b;">🐳 Docker — Healthcheck sqlcmd path</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        La imagen <code>mssql/server:2022-latest</code> instala <code>sqlcmd</code> en <code>/opt/mssql-tools18/bin/</code> en lugar de la ruta antigua <code>/opt/mssql-tools/bin/</code>, causando que el healthcheck fallara y la API no arrancara.<br><br>
+        ✓ Solución: healthcheck con fallback — intenta <code>mssql-tools18</code> primero y si falla usa <code>mssql-tools</code>. Se aumentó <code>start_period: 30s</code> y <code>retries: 10</code>.
+      </div>
+    </div>
+
+    <div class="detail-box" style="border-left:4px solid #10b981;border-color:rgba(16,185,129,.2);">
+      <div class="db-label" style="color:#10b981;">🧪 Tests — AppDbContext InMemory</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.9;">
+        El <code>AuthService</code> requiere <code>AppDbContext</code> para migrar contraseñas a BCrypt. Los tests originales no lo incluían causando error de compilación.<br><br>
+        ✓ Solución: usar <code>UseInMemoryDatabase</code> en tests. El usuario debe registrarse en el contexto InMemory antes del <code>SaveChangesAsync()</code> con <code>ChangeTracker.Clear()</code> posterior.<br>
+        ✓ Resultado final: <strong style="color:#e2e8f0;">15/15 tests pasando ✅</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="spacer"></div>
+
+<!-- FOOTER -->
+<footer>
+  Creado por &nbsp;
+  <span style="color:#e2e8f0;font-family:'Syne',sans-serif;font-weight:700;">Juan David Escobar</span>
+  &nbsp;·&nbsp; 2026
+</footer>
+
+</body>
+</html>

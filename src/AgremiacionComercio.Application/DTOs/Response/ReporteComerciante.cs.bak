@@ -1,15 +1,33 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace AgremiacionComercio.Application.DTOs.Response;
 
 public class ReporteComercianteResponse
 {
+    [Column("Nombre / Razón Social")]
     public string NombreRazonSocial { get; set; } = string.Empty;
+
+    [Column("Municipio")]
     public string Municipio { get; set; } = string.Empty;
+
+    [Column("Teléfono")]
     public string? Telefono { get; set; }
+
+    [Column("Correo Electrónico")]
     public string? CorreoElectronico { get; set; }
+
+    [Column("Fecha de Registro")]
     public DateTime FechaRegistro { get; set; }
+
+    [Column("Estado")]
     public string Estado { get; set; } = string.Empty;
+
+    [Column("Cantidad de Establecimientos")]
     public int CantidadEstablecimientos { get; set; }
+
+    [Column("Total Ingresos")]
     public decimal TotalIngresos { get; set; }
+
+    [Column("Cantidad de Empleados")]
     public int CantidadEmpleados { get; set; }
 }
-
