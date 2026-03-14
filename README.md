@@ -69,8 +69,8 @@ dotnet test tests/AgremiacionComercio.Tests
 
 | Correo | Contraseña | Rol |
 |--------|-----------|-----|
-| admin@agremiacion.com | Admin123! | Administrador |
-| auxiliar@agremiacion.com | Auxiliar123! | Auxiliar de Registro |
+| admin@agremiacion.com | Admin$2026! | Administrador |
+| auxiliar@agremiacion.com | Aux1liar#2026 | Auxiliar de Registro |
 
 ## 📦 Tecnologías
 
